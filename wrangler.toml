@@ -1,0 +1,6 @@
+name = "ristorante-worker"
+main = "src/index.js"
+compatibility_date = "2026-01-12"
+
+[vars]
+# qui NON mettere la password del db
