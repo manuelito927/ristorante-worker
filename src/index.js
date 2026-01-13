@@ -33,7 +33,70 @@ export default {
 
     const url = new URL(req.url);
     const sql = neon(env.DATABASE_URL);
+    // --- ADMIN: create item ---
+    if (url.pathname === "/api/admin/menu" && req.method === "POST") {
+      if (!isAdmin(req, env)) return unauthorized();
 
+      const body = await req.json();
+      const {
+        name,
+        description = "",
+        price_cents,
+        category = "",
+        position = 0,
+        is_available = true,
+        image_url = null
+      } = body;
+
+      if (!name || typeof price_cents !== "number") {
+        return json({ error: "name and price_cents required" }, 400);
+      }
+
+      const rows = await sql`
+        insert into menu_items (name, description, price_cents, category, position, is_available, image_url)
+        values (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url})
+        returning *
+      `;
+      return json({ item: rows[0] }, 201);
+    }
+
+    // --- ADMIN: update item ---
+    if (url.pathname.startsWith("/api/admin/menu/") && req.method === "PUT") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const id = url.pathname.split("/").pop();
+      const body = await req.json();
+
+      const rows = await sql`
+        update menu_items
+        set
+          name = coalesce(${body.name ?? null}, name),
+          description = coalesce(${body.description ?? null}, description),
+          price_cents = coalesce(${body.price_cents ?? null}, price_cents),
+          category = coalesce(${body.category ?? null}, category),
+          position = coalesce(${body.position ?? null}, position),
+          is_available = coalesce(${body.is_available ?? null}, is_available),
+          image_url = coalesce(${body.image_url ?? null}, image_url)
+        where id::text = ${id}
+        returning *
+      `;
+      if (!rows.length) return json({ error: "Not found" }, 404);
+      return json({ item: rows[0] });
+    }
+
+    // --- ADMIN: delete item ---
+    if (url.pathname.startsWith("/api/admin/menu/") && req.method === "DELETE") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const id = url.pathname.split("/").pop();
+      const rows = await sql`
+        delete from menu_items
+        where id::text = ${id}
+        returning id
+      `;
+      if (!rows.length) return json({ error: "Not found" }, 404);
+      return json({ ok: true });
+    }
     if (url.pathname === "/api/health") {
       const r = await sql`select 1 as ok`;
       return json({ ok: true, db: r[0].ok === 1 });
