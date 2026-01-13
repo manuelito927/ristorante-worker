@@ -12,6 +12,15 @@ const json = (data, status = 200) =>
     headers: { "content-type": "application/json", ...cors }
   });
 
+const unauthorized = () =>
+  json({ error: "Unauthorized" }, 401);
+
+const isAdmin = (req, env) => {
+  const h = req.headers.get("authorization") || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  return !!env.ADMIN_TOKEN && token === env.ADMIN_TOKEN;
+};
+
 export default {
   async fetch(req, env) {
     if (req.method === "OPTIONS") {
