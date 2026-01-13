@@ -2,8 +2,8 @@ import { neon } from "@neondatabase/serverless";
 
 const cors = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET,POST,OPTIONS",
-  "access-control-allow-headers": "content-type"
+  "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "access-control-allow-headers": "content-type,authorization"
 };
 
 const json = (data, status = 200) =>
@@ -12,8 +12,7 @@ const json = (data, status = 200) =>
     headers: { "content-type": "application/json", ...cors }
   });
 
-const unauthorized = () =>
-  json({ error: "Unauthorized" }, 401);
+const unauthorized = () => json({ error: "Unauthorized" }, 401);
 
 const isAdmin = (req, env) => {
   const h = req.headers.get("authorization") || "";
@@ -23,6 +22,7 @@ const isAdmin = (req, env) => {
 
 export default {
   async fetch(req, env) {
+    // CORS preflight
     if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: cors });
     }
@@ -33,7 +33,8 @@ export default {
 
     const url = new URL(req.url);
     const sql = neon(env.DATABASE_URL);
-    // --- ADMIN: create item ---
+
+    // ---------- ADMIN: create item ----------
     if (url.pathname === "/api/admin/menu" && req.method === "POST") {
       if (!isAdmin(req, env)) return unauthorized();
 
@@ -60,7 +61,7 @@ export default {
       return json({ item: rows[0] }, 201);
     }
 
-    // --- ADMIN: update item ---
+    // ---------- ADMIN: update item ----------
     if (url.pathname.startsWith("/api/admin/menu/") && req.method === "PUT") {
       if (!isAdmin(req, env)) return unauthorized();
 
@@ -84,7 +85,7 @@ export default {
       return json({ item: rows[0] });
     }
 
-    // --- ADMIN: delete item ---
+    // ---------- ADMIN: delete item ----------
     if (url.pathname.startsWith("/api/admin/menu/") && req.method === "DELETE") {
       if (!isAdmin(req, env)) return unauthorized();
 
@@ -97,14 +98,17 @@ export default {
       if (!rows.length) return json({ error: "Not found" }, 404);
       return json({ ok: true });
     }
+
+    // ---------- PUBLIC: health ----------
     if (url.pathname === "/api/health") {
       const r = await sql`select 1 as ok`;
       return json({ ok: true, db: r[0].ok === 1 });
     }
 
+    // ---------- PUBLIC: menu ----------
     if (url.pathname === "/api/menu") {
       const rows = await sql`
-        select id, name, description, price_cents, category
+        select id, name, description, price_cents, category, position, is_available, image_url
         from menu_items
         where is_available = true
         order by category, position
