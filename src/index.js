@@ -22,7 +22,6 @@ const isAdmin = (req, env) => {
 
 export default {
   async fetch(req, env) {
-    // CORS preflight
     if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: cors });
     }
@@ -34,7 +33,7 @@ export default {
     const url = new URL(req.url);
     const sql = neon(env.DATABASE_URL);
 
-    // ---------- ADMIN: create item ----------
+    // ADMIN: create item
     if (url.pathname === "/api/admin/menu" && req.method === "POST") {
       if (!isAdmin(req, env)) return unauthorized();
 
@@ -61,7 +60,7 @@ export default {
       return json({ item: rows[0] }, 201);
     }
 
-    // ---------- ADMIN: update item ----------
+    // ADMIN: update item
     if (url.pathname.startsWith("/api/admin/menu/") && req.method === "PUT") {
       if (!isAdmin(req, env)) return unauthorized();
 
@@ -85,7 +84,7 @@ export default {
       return json({ item: rows[0] });
     }
 
-    // ---------- ADMIN: delete item ----------
+    // ADMIN: delete item
     if (url.pathname.startsWith("/api/admin/menu/") && req.method === "DELETE") {
       if (!isAdmin(req, env)) return unauthorized();
 
@@ -99,13 +98,13 @@ export default {
       return json({ ok: true });
     }
 
-    // ---------- PUBLIC: health ----------
+    // PUBLIC: health
     if (url.pathname === "/api/health") {
       const r = await sql`select 1 as ok`;
       return json({ ok: true, db: r[0].ok === 1 });
     }
 
-    // ---------- PUBLIC: menu ----------
+    // PUBLIC: menu
     if (url.pathname === "/api/menu") {
       const rows = await sql`
         select id, name, description, price_cents, category, position, is_available, image_url
