@@ -155,12 +155,30 @@ export default {
 
     /* ==========================
        PAGES CONTENT (come-funziona)
-       GET  /api/page/:slug
-       PUT  /api/admin/page/:slug   (admin)
+       GET  /api/page/:slug           (public)
+       GET  /api/admin/page/:slug     (admin)   ✅ AGGIUNTO
+       PUT  /api/admin/page/:slug     (admin)
        ========================== */
 
     // PUBLIC: read page content
     if (url.pathname.startsWith("/api/page/") && req.method === "GET") {
+      const slug = url.pathname.split("/").pop();
+
+      const rows = await sql`
+        select slug, data, updated_at
+        from site_pages
+        where slug = ${slug}
+        limit 1
+      `;
+
+      if (!rows.length) return json({ slug, data: {}, updated_at: null });
+      return json(rows[0]);
+    }
+
+    // ✅ ADMIN: read page content (protetto)
+    if (url.pathname.startsWith("/api/admin/page/") && req.method === "GET") {
+      if (!isAdmin(req, env)) return unauthorized();
+
       const slug = url.pathname.split("/").pop();
 
       const rows = await sql`
