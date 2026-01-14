@@ -150,28 +150,59 @@ export default {
     /* ==========================
        PUBLIC: PRENOTA
        POST /api/reservations
+       (DB schema: full_name, reserved_at)
        ========================== */
     if (url.pathname === "/api/reservations" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
 
-      const name = cleanStr(body.name);
+      // accetta sia "name" che "full_name"
+      const full_name = cleanStr(body.full_name || body.name);
       const phone = cleanStr(body.phone);
       const people = Number(body.people || 2);
+
+      // puoi inviare:
+      // - reserved_at (ISO)
+      // - oppure date + time
+      const reserved_at_raw = cleanStr(body.reserved_at);
       const date = cleanStr(body.date); // es: 2026-01-14
       const time = cleanStr(body.time); // es: 20:30
+
       const notes = cleanStr(body.notes) || null;
 
-      if (!name || !phone || !date || !time) {
-        return json({ error: "name, phone, date, time required" }, 400);
+      if (!full_name || !phone) {
+        return json({ error: "full_name/name and phone required" }, 400);
       }
       if (!Number.isFinite(people) || people < 1 || people > 30) {
         return json({ error: "people invalid" }, 400);
       }
 
-      const rows = await sql`
-        insert into reservations (name, phone, people, date, time, notes)
-        values (${name}, ${phone}, ${people}, ${date}, ${time}, ${notes})
-        returning id, created_at, status
+      let rows;
+
+      // Caso A: invii reserved_at già pronto (consigliato)
+      if (reserved_at_raw) {
+        rows = await sql`
+          insert into reservations (full_name, phone, people, reserved_at, notes)
+          values (${full_name}, ${phone}, ${people}, ${reserved_at_raw}::timestamptz, ${notes})
+          returning id, created_at, status, reserved_at
+        `;
+        return json({ ok: true, reservation: rows[0] }, 201);
+      }
+
+      // Caso B: invii date + time e noi creiamo reserved_at in Europe/Rome
+      if (!date || !time) {
+        return json({ error: "Either reserved_at OR (date and time) are required" }, 400);
+      }
+
+      rows = await sql`
+        insert into reservations (full_name, phone, people, reserved_at, notes)
+        values (
+          ${full_name},
+          ${phone},
+          ${people},
+          ((${date} || ' ' || ${time})::timestamp at time zone 'Europe/Rome'),
+          ${notes}
+        )
+        returning id, created_at, status, reserved_at
       `;
 
       return json({ ok: true, reservation: rows[0] }, 201);
@@ -188,7 +219,15 @@ export default {
       const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
 
       const rows = await sql`
-        select id, created_at, name, phone, people, date, time, notes, status
+        select
+          id,
+          created_at,
+          full_name,
+          phone,
+          people,
+          reserved_at,
+          notes,
+          status
         from reservations
         order by created_at desc
         limit ${limit}
@@ -203,8 +242,9 @@ export default {
       const body = await req.json().catch(() => ({}));
       const status = cleanStr(body.status);
 
-      if (!["new", "confirmed", "cancelled"].includes(status)) {
-        return json({ error: "status must be new|confirmed|cancelled" }, 400);
+      // nel tuo DB ho visto default "confirmed"
+      if (!["new", "pending", "confirmed", "cancelled"].includes(status)) {
+        return json({ error: "status must be new|pending|confirmed|cancelled" }, 400);
       }
 
       const rows = await sql`
