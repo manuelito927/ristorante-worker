@@ -22,6 +22,30 @@ const isAdmin = (req, env) => {
 
 const cleanStr = (v) => String(v ?? "").trim();
 
+// ==========================
+// R2: serve immagini pubbliche
+// GET /img/NOMEFILE.jpg
+// ==========================
+async function serveR2Image(req, env, url) {
+  // /img/...
+  if (!url.pathname.startsWith("/img/")) return null;
+
+  const key = url.pathname.replace("/img/", ""); // es: HERO.JPG
+  if (!key) return new Response("Not found", { status: 404, headers: cors });
+
+  const obj = await env.BUCKET.get(key);
+  if (!obj) return new Response("Not found", { status: 404, headers: cors });
+
+  const headers = new Headers(cors);
+  // content-type + cache ecc se presenti
+  obj.writeHttpMetadata(headers);
+  headers.set("etag", obj.httpEtag);
+  // cache ok (puoi cambiare)
+  headers.set("cache-control", "public, max-age=86400");
+
+  return new Response(obj.body, { headers });
+}
+
 export default {
   async fetch(req, env) {
     if (req.method === "OPTIONS") {
