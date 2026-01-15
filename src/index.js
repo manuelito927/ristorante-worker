@@ -254,3 +254,111 @@ export default {
       const rows = await sql`
         insert into reservations (full_name, phone, people, reserved_at, notes, status)
         values (${full_name}, ${phone}, ${people}, ${reserved_at}::timestamptz, ${notes}, 'new')
+                returning id, created_at, status
+      `;
+
+      return json({ ok: true, reservation: rows[0] }, 201);
+    }
+
+    /* ==========================
+       ADMIN: PRENOTAZIONI
+       ========================== */
+    if (url.pathname === "/api/admin/reservations" && req.method === "GET") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
+
+      const rows = await sql`
+        select
+          id,
+          created_at,
+          full_name,
+          phone,
+          people,
+          reserved_at,
+          notes,
+          status
+        from reservations
+        order by created_at desc
+        limit ${limit}
+      `;
+      return json({ reservations: rows });
+    }
+
+    if (url.pathname.startsWith("/api/admin/reservations/") && req.method === "PUT") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const id = url.pathname.split("/").pop();
+      const body = await req.json().catch(() => ({}));
+      const status = cleanStr(body.status);
+
+      if (!["new", "confirmed", "cancelled"].includes(status)) {
+        return json({ error: "status must be new|confirmed|cancelled" }, 400);
+      }
+
+      const rows = await sql`
+        update reservations
+        set status = ${status}
+        where id::text = ${id}
+        returning id, status
+      `;
+      if (!rows.length) return json({ error: "Not found" }, 404);
+      return json({ ok: true, reservation: rows[0] });
+    }
+
+    /* ==========================
+       PUBLIC: health
+       ========================== */
+    if (url.pathname === "/api/health") {
+      const r = await sql`select 1 as ok`;
+      return json({ ok: true, db: r[0].ok === 1 });
+    }
+
+    /* ==========================
+       PAGES CONTENT (come-funziona, gallery, storia, ecc.)
+       GET  /api/page/:slug
+       PUT  /api/admin/page/:slug   (admin)
+       ========================== */
+
+    // PUBLIC: read page content
+    if (url.pathname.startsWith("/api/page/") && req.method === "GET") {
+      const slug = url.pathname.split("/").pop();
+
+      const rows = await sql`
+        select slug, data, updated_at
+        from site_pages
+        where slug = ${slug}
+        limit 1
+      `;
+
+      if (!rows.length) return json({ slug, data: {}, updated_at: null });
+      return json(rows[0]);
+    }
+
+    // ADMIN: upsert page content
+    if (url.pathname.startsWith("/api/admin/page/") && req.method === "PUT") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const slug = url.pathname.split("/").pop();
+      const body = await req.json().catch(() => null);
+
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return json({ error: "Body must be a JSON object" }, 400);
+      }
+
+      const rows = await sql`
+        insert into site_pages (slug, data)
+        values (${slug}, ${JSON.stringify(body)}::jsonb)
+        on conflict (slug)
+        do update set data = excluded.data, updated_at = now()
+        returning slug, data, updated_at
+      `;
+
+      return json(rows[0]);
+    }
+
+    return json({ error: "Not found" }, 404);
+  }
+};
+        
+        
