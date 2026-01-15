@@ -57,6 +57,9 @@ export default {
     }
 
     const url = new URL(req.url);
+        // ✅ Prima gestiamo R2 (così NON serve DATABASE_URL per le immagini)
+    const r2resp = await serveR2Image(req, env, url);
+    if (r2resp) return r2resp;
     const sql = neon(env.DATABASE_URL);
 
     /* ==========================
