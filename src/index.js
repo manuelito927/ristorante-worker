@@ -203,30 +203,29 @@ export default {
       return json({ ok: true });
     }
 
-    /* ==========================
-       PUBLIC: MENU con lingua
-       ========================== */
-    if (url.pathname === "/api/menu" && req.method === "GET") {
-      const lang = (url.searchParams.get("lang") || "it").toLowerCase();
-
-      const rows = await sql`
-        select
-          id,
-          case when ${lang}='en' and coalesce(nullif(name_en,''), '') <> '' then name_en else name end as name,
-          case when ${lang}='en' and coalesce(nullif(description_en,''), '') <> '' then description_en else description end as description,
-          price_cents,
-          case when ${lang}='en' and coalesce(nullif(category_en,''), '') <> '' then category_en else category end as category,
-          position,
-          is_available,
-          image_url
-        from menu_items
-        where is_available = true
-        order by
-          (case when ${lang}='en' and coalesce(nullif(category_en,''), '') <> '' then category_en else category end),
-          position
-      `;
-      return json({ items: rows });
-    }
+  /* ==========================
+   PUBLIC: MENU (ritorna IT + EN)
+   ========================== */
+if (url.pathname === "/api/menu" && req.method === "GET") {
+  const rows = await sql`
+    select
+      id,
+      name,
+      description,
+      price_cents,
+      category,
+      position,
+      is_available,
+      image_url,
+      name_en,
+      description_en,
+      category_en
+    from menu_items
+    where is_available = true
+    order by category, position
+  `;
+  return json({ items: rows });
+}
 
     /* ==========================
        PUBLIC: PRENOTA
