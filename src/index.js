@@ -176,8 +176,8 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
       (name, description, price_cents, category, position, is_available, image_url,
        name_en, description_en, category_en, allergens)
     values
-      (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
-       ${name_en}, ${description_en}, ${category_en}, ${allergens})
+  (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
+   ${name_en}, ${description_en}, ${category_en}, ${allergens_clean})
     returning *
   `;
 
