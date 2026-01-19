@@ -22,6 +22,23 @@ const isAdmin = (req, env) => {
 
 const cleanStr = (v) => String(v ?? "").trim();
 
+const normalizeAllergens = (v) => {
+  const allowed = new Set([
+    "glutine","crostacei","uova","pesce","arachidi","soia","latte",
+    "frutta_a_guscio","sedano","senape","sesamo","solfiti",
+    "lupini","molluschi","nichel"
+  ]);
+
+  const arr = Array.isArray(v) ? v : [];
+  return Array.from(
+    new Set(
+      arr
+        .map(x => String(x ?? "").trim().toLowerCase())
+        .filter(x => x && allowed.has(x))
+    )
+  );
+};
+
 /* =========================================================
    R2: serve immagini pubbliche
    GET /img/NOMEFILE.jpg
