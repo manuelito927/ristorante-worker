@@ -164,6 +164,7 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
     is_available = true,
     image_url = null,
     allergens = []
+    const allergens_clean = normalizeAllergens(allergens);
   } = body;
 
   if (!name || typeof price_cents !== "number") {
