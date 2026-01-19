@@ -187,6 +187,7 @@ const rows = await sql`
           name_en = coalesce(${body.name_en ?? null}, name_en),
           description_en = coalesce(${body.description_en ?? null}, description_en),
           category_en = coalesce(${body.category_en ?? null}, category_en)
+                    ,allergens = coalesce(${body.allergens ?? null}, allergens)
         where id::text = ${id}
         returning *
       `;
