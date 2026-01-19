@@ -222,7 +222,7 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       image_url,
       name_en,
       description_en,
-      category_en
+      category_en,
       allergens
     from menu_items
     where is_available = true
