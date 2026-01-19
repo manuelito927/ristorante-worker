@@ -142,6 +142,7 @@ export default {
         name_en = "",
         description_en = "",
         category_en = "",
+        allergens = []
         price_cents,
         position = 0,
         is_available = true,
