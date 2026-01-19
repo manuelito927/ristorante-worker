@@ -225,6 +225,7 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       name_en,
       description_en,
       category_en
+      allergens
     from menu_items
     where is_available = true
     order by category, position
