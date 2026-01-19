@@ -131,37 +131,40 @@ export default {
        ADMIN: MENU CRUD
        ========================== */
 
-    if (url.pathname === "/api/admin/menu" && req.method === "POST") {
-      if (!isAdmin(req, env)) return unauthorized();
-      const body = await req.json();
+if (url.pathname === "/api/admin/menu" && req.method === "POST") {
+  if (!isAdmin(req, env)) return unauthorized();
+  const body = await req.json().catch(() => ({}));
 
-const {
-  name,
-  description = "",
-  category = "",
-  name_en = "",
-  description_en = "",
-  category_en = "",
-  price_cents,
-  position = 0,
-  is_available = true,
-  image_url = null,
-  allergens = [] // ✅ AGGIUNTO
-} = body;
+  const {
+    name,
+    description = "",
+    category = "",
+    name_en = "",
+    description_en = "",
+    category_en = "",
+    price_cents,
+    position = 0,
+    is_available = true,
+    image_url = null,
+    allergens = []
+  } = body;
 
-const rows = await sql`
-  insert into menu_items
-    (name, description, price_cents, category, position, is_available, image_url,
-     name_en, description_en, category_en, allergens)
-  values
-    (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
-     ${name_en}, ${description_en}, ${category_en}, ${allergens})
-  returning *
-`;
-        returning *
-      `;
-      return json({ item: rows[0] }, 201);
-    }
+  if (!name || typeof price_cents !== "number") {
+    return json({ error: "name and price_cents required" }, 400);
+  }
+
+  const rows = await sql`
+    insert into menu_items
+      (name, description, price_cents, category, position, is_available, image_url,
+       name_en, description_en, category_en, allergens)
+    values
+      (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
+       ${name_en}, ${description_en}, ${category_en}, ${allergens})
+    returning *
+  `;
+
+  return json({ item: rows[0] }, 201);
+}
 
     if (url.pathname.startsWith("/api/admin/menu/") && req.method === "PUT") {
       if (!isAdmin(req, env)) return unauthorized();
