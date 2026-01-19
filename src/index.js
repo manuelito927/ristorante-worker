@@ -189,6 +189,11 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
 
       const id = url.pathname.split("/").pop();
       const body = await req.json();
+const allergensParam =
+  Object.prototype.hasOwnProperty.call(body, "allergens")
+    ? normalizeAllergens(body.allergens)
+    : null;
+
 
       const rows = await sql`
         update menu_items
