@@ -154,12 +154,15 @@ export default {
       }
 
       const rows = await sql`
-        insert into menu_items
-          (name, description, price_cents, category, position, is_available, image_url,
-           name_en, description_en, category_en)
-        values
-          (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
-           ${name_en}, ${description_en}, ${category_en})
+const rows = await sql`
+  insert into menu_items
+    (name, description, price_cents, category, position, is_available, image_url,
+     name_en, description_en, category_en, allergens)
+  values
+    (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
+     ${name_en}, ${description_en}, ${category_en}, ${allergens})
+  returning *
+`;
         returning *
       `;
       return json({ item: rows[0] }, 201);
