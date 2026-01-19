@@ -135,25 +135,20 @@ export default {
       if (!isAdmin(req, env)) return unauthorized();
       const body = await req.json();
 
-      const {
-        name,
-        description = "",
-        category = "",
-        name_en = "",
-        description_en = "",
-        category_en = "",
-        allergens = []
-        price_cents,
-        position = 0,
-        is_available = true,
-        image_url = null
-      } = body;
+const {
+  name,
+  description = "",
+  category = "",
+  name_en = "",
+  description_en = "",
+  category_en = "",
+  price_cents,
+  position = 0,
+  is_available = true,
+  image_url = null,
+  allergens = [] // ✅ AGGIUNTO
+} = body;
 
-      if (!name || typeof price_cents !== "number") {
-        return json({ error: "name and price_cents required" }, 400);
-      }
-
-      const rows = await sql`
 const rows = await sql`
   insert into menu_items
     (name, description, price_cents, category, position, is_available, image_url,
