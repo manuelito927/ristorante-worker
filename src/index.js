@@ -153,19 +153,20 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
   const body = await req.json().catch(() => ({}));
 
   const {
-    name,
-    description = "",
-    category = "",
-    name_en = "",
-    description_en = "",
-    category_en = "",
-    price_cents,
-    position = 0,
-    is_available = true,
-    image_url = null,
-    allergens = []
-    const allergens_clean = normalizeAllergens(allergens);
-  } = body;
+  name,
+  description = "",
+  category = "",
+  name_en = "",
+  description_en = "",
+  category_en = "",
+  price_cents,
+  position = 0,
+  is_available = true,
+  image_url = null,
+  allergens = []
+} = body;
+
+const allergens_clean = normalizeAllergens(allergens);
 
   if (!name || typeof price_cents !== "number") {
     return json({ error: "name and price_cents required" }, 400);
