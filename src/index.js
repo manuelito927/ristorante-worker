@@ -322,7 +322,7 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
 
       const rows = await sql`
         insert into reservations (full_name, phone, people, reserved_at, notes, status)
-        values (${full_name}, ${phone}, ${people}, ${reserved_at}::timestamptz, ${notes}, 'new')
+        values (${full_name}, ${phone}, ${people}, ${reserved_at}::timestamp, ${notes}, 'new')
                 returning id, created_at, status
       `;
 
