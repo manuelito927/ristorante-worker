@@ -143,7 +143,49 @@ export default {
     }
 
     const sql = neon(env.DATABASE_URL);
+    /* ==========================
+       ADMIN: BOOKING STATUS (ON/OFF)
+       GET  /api/admin/booking/status
+       PUT  /api/admin/booking/status   body: { enabled: true/false }
+       salva su site_pages con slug = "booking"
+       ========================== */
 
+    if (url.pathname === "/api/admin/booking/status" && req.method === "GET") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const rows = await sql`
+        select data
+        from site_pages
+        where slug = 'booking'
+        limit 1
+      `;
+
+      let enabled = true; // default se non esiste ancora
+      if (rows.length) {
+        const d = rows[0]?.data;
+        enabled = !!(d && typeof d === "object" ? d.enabled : true);
+      }
+
+      return json({ enabled });
+    }
+
+    if (url.pathname === "/api/admin/booking/status" && req.method === "PUT") {
+      if (!isAdmin(req, env)) return unauthorized();
+
+      const body = await req.json().catch(() => ({}));
+      const enabled = !!body.enabled;
+
+      const data = { enabled };
+
+      await sql`
+        insert into site_pages (slug, data)
+        values ('booking', ${JSON.stringify(data)}::jsonb)
+        on conflict (slug)
+        do update set data = excluded.data, updated_at = now()
+      `;
+
+      return json({ ok: true, enabled });
+    }
     /* ==========================
        ADMIN: MENU CRUD
        ========================== */
