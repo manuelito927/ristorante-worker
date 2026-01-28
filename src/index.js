@@ -419,7 +419,9 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
         insert into site_pages (slug, data)
         values (${slug}, ${JSON.stringify(body)}::jsonb)
         on conflict (slug)
-        do update set data = excluded.data, updated_at = now()
+do update set
+  data = coalesce(site_pages.data, '{}'::jsonb) || excluded.data,
+  updated_at = now()
         returning slug, data, updated_at
       `;
 
