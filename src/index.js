@@ -387,6 +387,23 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
    STRIP HOME (pizze / antipasti / dolci)
    ========================== */
 
+// LISTA CATEGORIE STRIP (keys) - PUBLIC
+// GET /api/strip  -> { keys: ["pizze","dolci", ...] }
+if (url.pathname === "/api/strip" && req.method === "GET") {
+  const rows = await sql`
+    select slug
+    from site_pages
+    where slug like 'strip_%'
+    order by slug asc
+  `;
+
+  const keys = rows
+    .map(r => String(r.slug || "").replace(/^strip_/, ""))
+    .filter(Boolean);
+
+  return json({ keys });
+}
+
 // PUBLIC
 if (url.pathname.startsWith("/api/strip/") && req.method === "GET") {
   const key = url.pathname.split("/").pop(); // pizze
