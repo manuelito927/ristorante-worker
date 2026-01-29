@@ -436,7 +436,9 @@ if (url.pathname.startsWith("/api/admin/strip/") && req.method === "PUT") {
     insert into site_pages (slug, data)
     values (${slug}, ${JSON.stringify(body)}::jsonb)
     on conflict (slug)
-    do update set data = excluded.data, updated_at = now()
+do update set
+  data = coalesce(site_pages.data, '{}'::jsonb) || excluded.data,
+  updated_at = now()
   `;
 
   return json({ ok: true });
