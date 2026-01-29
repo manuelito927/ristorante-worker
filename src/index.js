@@ -442,6 +442,44 @@ if (url.pathname.startsWith("/api/admin/strip/") && req.method === "PUT") {
   return json({ ok: true });
 }
 
+/* ==========================
+   STRIP: CREA CATEGORIA (vuota)
+   POST /api/admin/strip/create
+   body: { key:"piatti_gourmet", title:"Piatti gourmet" }
+   crea site_pages slug = "strip_<key>" con { title, items:[] }
+   ========================== */
+if (url.pathname === "/api/admin/strip/create" && req.method === "POST") {
+  if (!isAdmin(req, env)) return unauthorized();
+
+  const body = await req.json().catch(() => ({}));
+  const key = cleanStr(body.key).toLowerCase();
+  const title = cleanStr(body.title) || "";
+
+  if (!key) return json({ error: "key required" }, 400);
+  if (!/^[a-z0-9_-]{2,30}$/.test(key)) {
+    return json({ error: "key invalid (usa solo a-z 0-9 _ -)" }, 400);
+  }
+
+  const slug = "strip_" + key;
+
+  // se esiste già, non sovrascrivere
+  const exists = await sql`
+    select slug from site_pages where slug = ${slug} limit 1
+  `;
+  if (exists.length) {
+    return json({ error: "Categoria già esistente" }, 409);
+  }
+
+  const data = { title: title || key, items: [] };
+
+  await sql`
+    insert into site_pages (slug, data)
+    values (${slug}, ${JSON.stringify(data)}::jsonb)
+  `;
+
+  return json({ ok: true, slug, data }, 201);
+}
+
     /* ==========================
        PAGES CONTENT (come-funziona, gallery, storia, ecc.)
        GET  /api/page/:slug
