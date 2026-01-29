@@ -470,6 +470,61 @@ do update set
       return json(rows[0]);
     }
 
+/* ==========================
+   STRIP ITEMS (aggiungi singolo piatto con immagine)
+   POST /api/admin/strip/items
+   body: { key:"pizze", name:"Margherita", image_url:"https://.../img/xxx.jpg" }
+   salva dentro site_pages slug = "strip_<key>" come: { title, items:[] }
+   ========================== */
+
+if (url.pathname === "/api/admin/strip/items" && req.method === "POST") {
+  if (!isAdmin(req, env)) return unauthorized();
+
+  const body = await req.json().catch(() => ({}));
+  const key = cleanStr(body.key).toLowerCase();
+  const name = cleanStr(body.name);
+  const image_url = cleanStr(body.image_url);
+
+  if (!key) return json({ error: "key required" }, 400);
+  if (!name) return json({ error: "name required" }, 400);
+  if (!image_url) return json({ error: "image_url required" }, 400);
+
+  const slug = "strip_" + key;
+
+  // leggi dati attuali
+  const rows = await sql`
+    select data
+    from site_pages
+    where slug = ${slug}
+    limit 1
+  `;
+
+  const current = rows.length && rows[0].data && typeof rows[0].data === "object"
+    ? rows[0].data
+    : {};
+
+  const items = Array.isArray(current.items) ? current.items : [];
+
+  const newItem = {
+    id: Date.now(),
+    name,
+    image_url
+  };
+
+  const nextData = {
+    ...current,
+    items: [...items, newItem]
+  };
+
+  await sql`
+    insert into site_pages (slug, data)
+    values (${slug}, ${JSON.stringify(nextData)}::jsonb)
+    on conflict (slug)
+    do update set data = excluded.data, updated_at = now()
+  `;
+
+  return json({ ok: true, item: newItem });
+}
     return json({ error: "Not found" }, 404);
   }
 };
