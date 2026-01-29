@@ -20,7 +20,7 @@ const isAdmin = (req, env) => {
   return !!env.ADMIN_TOKEN && token === env.ADMIN_TOKEN;
 };
 
-const cleanStr = (v) => String(v ?? "").trim();
+const cleanStr = (v) => (v == null ? "" : String(v)).trim();
 
 const normalizeAllergens = (v) => {
   const allowed = new Set([
