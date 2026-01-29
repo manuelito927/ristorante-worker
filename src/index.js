@@ -383,6 +383,48 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       return json({ ok: true, db: r[0].ok === 1 });
     }
 
+/* ==========================
+   STRIP HOME (pizze / antipasti / dolci)
+   ========================== */
+
+// PUBLIC
+if (url.pathname.startsWith("/api/strip/") && req.method === "GET") {
+  const key = url.pathname.split("/").pop(); // pizze
+  const slug = "strip_" + key;
+
+  const rows = await sql`
+    select data
+    from site_pages
+    where slug = ${slug}
+    limit 1
+  `;
+
+  if (!rows.length) return json({ data: null });
+  return json({ data: rows[0].data });
+}
+
+// ADMIN
+if (url.pathname.startsWith("/api/admin/strip/") && req.method === "PUT") {
+  if (!isAdmin(req, env)) return unauthorized();
+
+  const key = url.pathname.split("/").pop(); // pizze
+  const slug = "strip_" + key;
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return json({ error: "Body must be object" }, 400);
+  }
+
+  await sql`
+    insert into site_pages (slug, data)
+    values (${slug}, ${JSON.stringify(body)}::jsonb)
+    on conflict (slug)
+    do update set data = excluded.data, updated_at = now()
+  `;
+
+  return json({ ok: true });
+}
+
     /* ==========================
        PAGES CONTENT (come-funziona, gallery, storia, ecc.)
        GET  /api/page/:slug
