@@ -16,8 +16,9 @@ const unauthorized = () => json({ error: "Unauthorized" }, 401);
 
 const isAdmin = (req, env) => {
   const h = req.headers.get("authorization") || "";
-  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
-  return !!env.ADMIN_TOKEN && token === env.ADMIN_TOKEN;
+  const token = h.replace(/^Bearer\s+/i, "").trim();
+  const secret = String(env.ADMIN_TOKEN || "").trim();
+  return !!secret && token === secret;
 };
 
 const cleanStr = (v) => (v == null ? "" : String(v)).trim();
