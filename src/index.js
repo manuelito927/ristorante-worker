@@ -323,7 +323,7 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       const rows = await sql`
         insert into reservations (full_name, phone, people, reserved_at, notes, status)
         values (${full_name}, ${phone}, ${people}, ${reserved_at}::timestamp, ${notes}, 'new')
-                returning id, created_at, status
+returning id, created_at, status, to_char(reserved_at, 'YYYY-MM-DD HH24:MI') as reserved_at
       `;
 
       return json({ ok: true, reservation: rows[0] }, 201);
