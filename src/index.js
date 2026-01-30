@@ -582,6 +582,45 @@ if (url.pathname === "/api/admin/strip/items" && req.method === "POST") {
 
   return json({ ok: true, item: newItem });
 }
+
+
+// ==========================
+// ADMIN: GALLERY (aggiungi immagine)
+// POST /api/admin/gallery
+// ==========================
+if (url.pathname === "/api/admin/gallery" && req.method === "POST") {
+  if (!isAdmin(req, env)) return unauthorized();
+
+  const body = await req.json().catch(() => ({}));
+  const image_url = cleanStr(body.image_url);
+  if (!image_url) return json({ error: "image_url required" }, 400);
+
+  const rows = await sql`
+    select data
+    from site_pages
+    where slug = 'gallery'
+    limit 1
+  `;
+
+  const current =
+    rows.length && rows[0].data && typeof rows[0].data === "object"
+      ? rows[0].data
+      : {};
+
+  const images = Array.isArray(current.images) ? current.images : [];
+
+  const next = { images: [...images, image_url] };
+
+  await sql`
+    insert into site_pages (slug, data)
+    values ('gallery', ${JSON.stringify(next)}::jsonb)
+    on conflict (slug)
+    do update set data = excluded.data, updated_at = now()
+  `;
+
+  return json({ ok: true, image_url });
+}
+
     return json({ error: "Not found" }, 404);
   }
 };
