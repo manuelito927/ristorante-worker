@@ -621,6 +621,26 @@ if (url.pathname === "/api/admin/gallery" && req.method === "POST") {
   return json({ ok: true, image_url });
 }
 
+// ==========================
+// PUBLIC: GALLERY
+// GET /api/gallery
+// ==========================
+if (url.pathname === "/api/gallery" && req.method === "GET") {
+  const rows = await sql`
+    select data
+    from site_pages
+    where slug = 'gallery'
+    limit 1
+  `;
+
+  const images =
+    rows.length && rows[0].data && Array.isArray(rows[0].data.images)
+      ? rows[0].data.images
+      : [];
+
+  return json({ images });
+}
+
     return json({ error: "Not found" }, 404);
   }
 };
