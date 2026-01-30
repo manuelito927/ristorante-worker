@@ -585,25 +585,24 @@ if (url.pathname === "/api/admin/strip/items" && req.method === "POST") {
 
 
 // ==========================
-// ADMIN: GALLERY (aggiungi immagine)
+// ADMIN: GALLERY (sostituisce TUTTA la gallery)
 // POST /api/admin/gallery
+// body: { images: [url1, url2, ...] }
 // ==========================
 if (url.pathname === "/api/admin/gallery" && req.method === "POST") {
   if (!isAdmin(req, env)) return unauthorized();
 
   const body = await req.json().catch(() => ({}));
-  const image_url = cleanStr(body.image_url);
-  if (!image_url) return json({ error: "image_url required" }, 400);
 
-  const rows = await sql`
-    select data
-    from site_pages
-    where slug = 'gallery'
-    limit 1
-  `;
+  const images = Array.isArray(body.images)
+    ? body.images.map(cleanStr).filter(Boolean)
+    : [];
 
-const next = { images: [image_url] };
+  if (!images.length) {
+    return json({ error: "images array required" }, 400);
+  }
 
+  const next = { images };
 
   await sql`
     insert into site_pages (slug, data)
@@ -612,7 +611,7 @@ const next = { images: [image_url] };
     do update set data = excluded.data, updated_at = now()
   `;
 
-  return json({ ok: true, image_url });
+  return json({ ok: true, count: images.length });
 }
 
 // ==========================
