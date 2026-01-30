@@ -602,14 +602,8 @@ if (url.pathname === "/api/admin/gallery" && req.method === "POST") {
     limit 1
   `;
 
-  const current =
-    rows.length && rows[0].data && typeof rows[0].data === "object"
-      ? rows[0].data
-      : {};
+const next = { images: [image_url] };
 
-  const images = Array.isArray(current.images) ? current.images : [];
-
-  const next = { images: [...images, image_url] };
 
   await sql`
     insert into site_pages (slug, data)
