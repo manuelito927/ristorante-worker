@@ -332,27 +332,27 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
     /* ==========================
        ADMIN: PRENOTAZIONI
        ========================== */
-    if (url.pathname === "/api/admin/reservations" && req.method === "GET") {
-      if (!isAdmin(req, env)) return unauthorized();
+if (url.pathname === "/api/admin/reservations" && req.method === "GET") {
+  if (!isAdmin(req, env)) return unauthorized();
 
-      const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
+  const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
 
-      const rows = await sql`
-        select
-          id,
-          created_at,
-          full_name,
-          phone,
-          people,
-          reserved_at,
-          notes,
-          status
-        from reservations
-        order by created_at desc
-        limit ${limit}
-      `;
-      return json({ reservations: rows });
-    }
+  const rows = await sql`
+    select
+      id,
+      created_at,
+      full_name,
+      phone,
+      people,
+      to_char(reserved_at, 'YYYY-MM-DD HH24:MI') as reserved_at,
+      notes,
+      status
+    from reservations
+    order by created_at desc
+    limit ${limit}
+  `;
+  return json({ reservations: rows });
+}
 
     if (url.pathname.startsWith("/api/admin/reservations/") && req.method === "PUT") {
       if (!isAdmin(req, env)) return unauthorized();
