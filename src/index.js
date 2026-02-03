@@ -205,7 +205,6 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
   price_cents,
   position = 0,
   is_available = true,
-  image_url = null,
   allergens = []
 } = body;
 
