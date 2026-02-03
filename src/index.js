@@ -40,6 +40,19 @@ const normalizeAllergens = (v) => {
   );
 };
 
+async function translateToEn(env, text) {
+  const t = String(text || "").trim();
+  if (!t) return "";
+
+  const out = await env.AI.run("@cf/meta/m2m100-1.2b", {
+    text: t,
+    source_lang: "it",
+    target_lang: "en",
+  });
+
+  return out?.translated_text || "";
+}
+
 /* =========================================================
    R2: serve immagini pubbliche
    GET /img/NOMEFILE.jpg
