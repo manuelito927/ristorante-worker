@@ -163,7 +163,7 @@ if (url.pathname === "/api/settings/booking" && req.method === "GET") {
     ? rows[0].data
     : {};
 
-  return json({ data: { enabled: !!d.enabled, whatsapp: d.whatsapp || "" } });
+return json({ data: { enabled: d.enabled !== false, whatsapp: d.whatsapp || "" } });
 }
 
 // ==========================
