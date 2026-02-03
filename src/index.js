@@ -284,7 +284,6 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       category,
       position,
       is_available,
-      image_url,
       name_en,
       description_en,
       category_en,
