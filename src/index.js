@@ -247,7 +247,6 @@ const allergensParam =
           category = coalesce(${body.category ?? null}, category),
           position = coalesce(${body.position ?? null}, position),
           is_available = coalesce(${body.is_available ?? null}, is_available),
-          image_url = coalesce(${body.image_url ?? null}, image_url),
           name_en = coalesce(${body.name_en ?? null}, name_en),
           description_en = coalesce(${body.description_en ?? null}, description_en),
           category_en = coalesce(${body.category_en ?? null}, category_en)
