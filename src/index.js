@@ -532,29 +532,100 @@ if (url.pathname === "/api/admin/strip/create" && req.method === "POST") {
       return json(rows[0]);
     }
 
-    // ADMIN: upsert page content
-    if (url.pathname.startsWith("/api/admin/page/") && req.method === "PUT") {
-      if (!isAdmin(req, env)) return unauthorized();
+// ADMIN: upsert page content + AUTO TRANSLATE EN
+if (url.pathname.startsWith("/api/admin/page/") && req.method === "PUT") {
+  if (!isAdmin(req, env)) return unauthorized();
 
-      const slug = url.pathname.split("/").pop();
-      const body = await req.json().catch(() => null);
+  const slug = url.pathname.split("/").pop();
+  const body = await req.json().catch(() => null);
 
-      if (!body || typeof body !== "object" || Array.isArray(body)) {
-        return json({ error: "Body must be a JSON object" }, 400);
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json({ error: "Body must be a JSON object" }, 400);
+  }
+
+  // ✅ NON tocchiamo queste pagine / campi (per sicurezza)
+  const SKIP_TRANSLATE_SLUGS = new Set([
+    "gallery",      // solo immagini
+    "covers",       // solo url immagini
+  ]);
+
+  // Chiavi da NON tradurre (url, telefoni, numeri, ecc.)
+  const IGNORE_KEYS = new Set([
+    "href", "url", "image", "image_url", "images",
+    "phone", "whatsapp",
+    "enabled",
+    "id",
+  ]);
+
+  async function autoAddEnglish(obj) {
+    // ricorsione: oggetti/array
+    if (Array.isArray(obj)) {
+      const outArr = [];
+      for (const x of obj) outArr.push(await autoAddEnglish(x));
+      return outArr;
+    }
+
+    if (!obj || typeof obj !== "object") return obj;
+
+    const out = { ...obj };
+
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+
+      // se è già inglese o è una chiave da ignorare → skip
+      if (k.endsWith("_en")) continue;
+      if (IGNORE_KEYS.has(k)) continue;
+
+      // oggetti/array dentro
+      if (Array.isArray(v) || (v && typeof v === "object")) {
+        out[k] = await autoAddEnglish(v);
+        continue;
       }
 
-      const rows = await sql`
-        insert into site_pages (slug, data)
-        values (${slug}, ${JSON.stringify(body)}::jsonb)
-        on conflict (slug)
-do update set
-  data = coalesce(site_pages.data, '{}'::jsonb) || excluded.data,
-  updated_at = now()
-        returning slug, data, updated_at
-      `;
+      // se è stringa → crea *_en se manca
+      if (typeof v === "string") {
+        const s = v.trim();
 
-      return json(rows[0]);
+        // non tradurre stringhe vuote o che sembrano url
+        if (!s) continue;
+        if (/^https?:\/\//i.test(s)) continue;
+        if (/^\/[a-z0-9/_-]*$/i.test(s)) continue; // es. "/menu/"
+
+        const enKey = k + "_en";
+        if (out[enKey] == null || String(out[enKey]).trim() === "") {
+          out[enKey] = await translateToEn(env, s);
+        }
+      }
     }
+
+    return out;
+  }
+
+  let finalBody = body;
+
+  // ✅ per queste pagine: traduco automaticamente
+  // (NON menu: tu già l’hai fatto e non passa da qui)
+  if (!SKIP_TRANSLATE_SLUGS.has(slug)) {
+    try {
+      finalBody = await autoAddEnglish(body);
+    } catch (e) {
+      // se AI fallisce, salva comunque l’italiano
+      finalBody = body;
+    }
+  }
+
+  const rows = await sql`
+    insert into site_pages (slug, data)
+    values (${slug}, ${JSON.stringify(finalBody)}::jsonb)
+    on conflict (slug)
+    do update set
+      data = coalesce(site_pages.data, '{}'::jsonb) || excluded.data,
+      updated_at = now()
+    returning slug, data, updated_at
+  `;
+
+  return json(rows[0]);
+}
 
 /* ==========================
    STRIP ITEMS (aggiungi singolo piatto con immagine)
