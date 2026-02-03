@@ -144,6 +144,48 @@ export default {
     }
 
     const sql = neon(env.DATABASE_URL);
+    
+    
+    // ==========================
+// PUBLIC: BOOKING SETTINGS
+// GET /api/settings/booking
+// ritorna { data: { enabled, whatsapp } }
+// ==========================
+if (url.pathname === "/api/settings/booking" && req.method === "GET") {
+  const rows = await sql`
+    select data
+    from site_pages
+    where slug = 'booking'
+    limit 1
+  `;
+
+  const d = rows.length && rows[0]?.data && typeof rows[0].data === "object"
+    ? rows[0].data
+    : {};
+
+  return json({ data: { enabled: !!d.enabled, whatsapp: d.whatsapp || "" } });
+}
+
+// ==========================
+// ADMIN: BOOKING SETTINGS
+// PUT /api/admin/settings/booking
+// body: { enabled: true/false, whatsapp: "+39..." }
+// ==========================
+if (url.pathname === "/api/admin/settings/booking" && req.method === "PUT") {
+  if (!isAdmin(req, env)) return unauthorized();
+
+  const body = await req.json().catch(() => ({}));
+  const data = { enabled: !!body.enabled, whatsapp: cleanStr(body.whatsapp) };
+
+  await sql`
+    insert into site_pages (slug, data)
+    values ('booking', ${JSON.stringify(data)}::jsonb)
+    on conflict (slug)
+    do update set data = excluded.data, updated_at = now()
+  `;
+
+  return json({ ok: true, data });
+}
     /* ==========================
        ADMIN: BOOKING STATUS (ON/OFF)
        GET  /api/admin/booking/status
