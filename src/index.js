@@ -460,22 +460,6 @@ if (url.pathname.startsWith("/api/admin/strip/") && req.method === "DELETE") {
   return json({ ok: true, slug });
 }
 
-// ADMIN: DELETE categoria strip
-if (url.pathname.startsWith("/api/admin/strip/") && req.method === "DELETE") {
-  if (!isAdmin(req, env)) return unauthorized();
-
-  const key = url.pathname.split("/").pop();
-  const slug = "strip_" + key;
-
-  const rows = await sql`
-    delete from site_pages
-    where slug = ${slug}
-    returning slug
-  `;
-
-  if (!rows.length) return json({ error: "Not found" }, 404);
-  return json({ ok: true, slug });
-}
 
 /* ==========================
    STRIP: CREA CATEGORIA (vuota)
