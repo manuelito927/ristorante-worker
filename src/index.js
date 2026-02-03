@@ -386,13 +386,13 @@ if (url.pathname === "/api/admin/reservations" && req.method === "GET") {
    ========================== */
 
 // LISTA CATEGORIE STRIP (keys) - PUBLIC
-// GET /api/strip  -> { keys: ["pizze","dolci", ...] }
+// GET /api/strip
 if (url.pathname === "/api/strip" && req.method === "GET") {
   const rows = await sql`
-    select slug
+    select slug, data
     from site_pages
     where slug like 'strip_%'
-    order by slug asc
+    order by (data->>'order')::int nulls last, slug asc
   `;
 
   const keys = rows
@@ -401,7 +401,6 @@ if (url.pathname === "/api/strip" && req.method === "GET") {
 
   return json({ keys });
 }
-
 // PUBLIC
 if (url.pathname.startsWith("/api/strip/") && req.method === "GET") {
   const key = url.pathname.split("/").pop(); // pizze
