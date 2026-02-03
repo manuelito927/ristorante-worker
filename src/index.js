@@ -215,11 +215,11 @@ const allergens_clean = normalizeAllergens(allergens);
   }
 
   const rows = await sql`
-    insert into menu_items
-      (name, description, price_cents, category, position, is_available, image_url,
-       name_en, description_en, category_en, allergens)
-    values
-  (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available}, ${image_url},
+insert into menu_items
+  (name, description, price_cents, category, position, is_available,
+   name_en, description_en, category_en, allergens)
+values
+  (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available},
    ${name_en}, ${description_en}, ${category_en}, ${allergens_clean})
     returning *
   `;
