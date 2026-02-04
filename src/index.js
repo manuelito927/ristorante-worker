@@ -158,13 +158,13 @@ export default {
 
     const sql = neon(env.DATABASE_URL);
     
-    // ==========================
-// MENU CATEGORIES ORDER
+// ==========================
+// MENU CATEGORIES ORDER (NUMERICO)
 // salva/legge l'ordine delle categorie del MENU
 // ==========================
 
 // PUBLIC: GET /api/menu/categories
-// ritorna: { data: { order: ["PIZZE","ANTIPASTI", ...] } }
+// ritorna: { data: { categories: [{ name:"PIZZE", order:0 }, ...] } }
 if (url.pathname === "/api/menu/categories" && req.method === "GET") {
   const rows = await sql`
     select data
@@ -177,26 +177,44 @@ if (url.pathname === "/api/menu/categories" && req.method === "GET") {
     ? rows[0].data
     : {};
 
-  const order = Array.isArray(d.order) ? d.order.map(cleanStr).filter(Boolean) : [];
-  return json({ data: { order } });
+  // nuovo formato
+  const categories = Array.isArray(d.categories) ? d.categories : [];
+
+  // normalizza: name string, order numero
+  const normalized = categories
+    .map(c => ({
+      name: cleanStr(c?.name),
+      order: Number.isFinite(Number(c?.order)) ? Number(c.order) : 0
+    }))
+    .filter(c => c.name);
+
+  return json({ data: { categories: normalized } });
 }
 
 // ADMIN: PUT /api/admin/menu/categories
-// body: { order: ["PIZZE","ANTIPASTI", ...] }
+// body: { categories: [{ name:"PIZZE", order:0 }, ...] }
 if (url.pathname === "/api/admin/menu/categories" && req.method === "PUT") {
   if (!isAdmin(req, env)) return unauthorized();
 
   const body = await req.json().catch(() => ({}));
-  const order = Array.isArray(body.order) ? body.order.map(cleanStr).filter(Boolean) : [];
+
+  const categories = Array.isArray(body.categories) ? body.categories : [];
+
+  const normalized = categories
+    .map(c => ({
+      name: cleanStr(c?.name),
+      order: Number.isFinite(Number(c?.order)) ? Number(c.order) : 0
+    }))
+    .filter(c => c.name);
 
   await sql`
     insert into site_pages (slug, data)
-    values ('menu_categories', ${JSON.stringify({ order })}::jsonb)
+    values ('menu_categories', ${JSON.stringify({ categories: normalized })}::jsonb)
     on conflict (slug)
     do update set data = excluded.data, updated_at = now()
   `;
 
-  return json({ ok: true, data: { order } });
+  return json({ ok: true, data: { categories: normalized } });
 }
     
     // ==========================
