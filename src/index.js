@@ -328,6 +328,7 @@ const allergensParam =
    PUBLIC: MENU (ritorna IT + EN)
    ========================== */
 if (url.pathname === "/api/menu" && req.method === "GET") {
+  // 1) prendo tutti gli items
   const rows = await sql`
     select
       id,
@@ -343,9 +344,45 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       allergens
     from menu_items
     where is_available = true
-    order by category, position
   `;
-  return json({ items: rows });
+
+  // 2) prendo ordine categorie salvato in site_pages
+  const catRows = await sql`
+    select data
+    from site_pages
+    where slug = 'menu_categories'
+    limit 1
+  `;
+
+  const d = catRows.length && catRows[0]?.data && typeof catRows[0].data === "object"
+    ? catRows[0].data
+    : {};
+
+  const orderArr = Array.isArray(d.order) ? d.order.map(cleanStr).filter(Boolean) : [];
+
+  // map: categoria -> index (0,1,2...)
+  const orderMap = new Map();
+  orderArr.forEach((c, i) => orderMap.set(String(c).trim(), i));
+
+  // 3) sort JS: prima categoria (secondo ordine admin), poi position
+  const items = (rows || []).slice().sort((a, b) => {
+    const ac = String(a.category || "").trim();
+    const bc = String(b.category || "").trim();
+
+    const ai = orderMap.has(ac) ? orderMap.get(ac) : 9999;
+    const bi = orderMap.has(bc) ? orderMap.get(bc) : 9999;
+
+    if (ai !== bi) return ai - bi;
+
+    const ap = Number(a.position || 0);
+    const bp = Number(b.position || 0);
+    if (ap !== bp) return ap - bp;
+
+    // fallback stabile
+    return String(a.name || "").localeCompare(String(b.name || ""), "it");
+  });
+
+  return json({ items });
 }
 
     /* ==========================
