@@ -158,6 +158,46 @@ export default {
 
     const sql = neon(env.DATABASE_URL);
     
+    // ==========================
+// MENU CATEGORIES ORDER
+// salva/legge l'ordine delle categorie del MENU
+// ==========================
+
+// PUBLIC: GET /api/menu/categories
+// ritorna: { data: { order: ["PIZZE","ANTIPASTI", ...] } }
+if (url.pathname === "/api/menu/categories" && req.method === "GET") {
+  const rows = await sql`
+    select data
+    from site_pages
+    where slug = 'menu_categories'
+    limit 1
+  `;
+
+  const d = rows.length && rows[0]?.data && typeof rows[0].data === "object"
+    ? rows[0].data
+    : {};
+
+  const order = Array.isArray(d.order) ? d.order.map(cleanStr).filter(Boolean) : [];
+  return json({ data: { order } });
+}
+
+// ADMIN: PUT /api/admin/menu/categories
+// body: { order: ["PIZZE","ANTIPASTI", ...] }
+if (url.pathname === "/api/admin/menu/categories" && req.method === "PUT") {
+  if (!isAdmin(req, env)) return unauthorized();
+
+  const body = await req.json().catch(() => ({}));
+  const order = Array.isArray(body.order) ? body.order.map(cleanStr).filter(Boolean) : [];
+
+  await sql`
+    insert into site_pages (slug, data)
+    values ('menu_categories', ${JSON.stringify({ order })}::jsonb)
+    on conflict (slug)
+    do update set data = excluded.data, updated_at = now()
+  `;
+
+  return json({ ok: true, data: { order } });
+}
     
     // ==========================
 // PUBLIC: BOOKING SETTINGS
