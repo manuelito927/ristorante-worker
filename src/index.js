@@ -376,12 +376,16 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
     ? catRows[0].data
     : {};
 
-  const orderArr = Array.isArray(d.order) ? d.order.map(cleanStr).filter(Boolean) : [];
+// nuovo formato: categories: [{name, order}]
+const categories = Array.isArray(d.categories) ? d.categories : [];
 
-  // map: categoria -> index (0,1,2...)
-  const orderMap = new Map();
-  orderArr.forEach((c, i) => orderMap.set(String(c).trim(), i));
-
+// map: categoria -> order numerico
+const orderMap = new Map();
+categories.forEach((c) => {
+  const name = cleanStr(c?.name);
+  const ord = Number.isFinite(Number(c?.order)) ? Number(c.order) : 9999;
+  if (name) orderMap.set(name, ord);
+});
   // 3) sort JS: prima categoria (secondo ordine admin), poi position
 const items = (rows || []).slice().sort((a, b) => {
   const ac = String(a.category || "").trim();
