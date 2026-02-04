@@ -365,25 +365,27 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
   orderArr.forEach((c, i) => orderMap.set(String(c).trim(), i));
 
   // 3) sort JS: prima categoria (secondo ordine admin), poi position
-  const items = (rows || []).slice().sort((a, b) => {
-    const ac = String(a.category || "").trim();
-    const bc = String(b.category || "").trim();
+const items = (rows || []).slice().sort((a, b) => {
+  const ac = String(a.category || "").trim();
+  const bc = String(b.category || "").trim();
 
-    const ai = orderMap.has(ac) ? orderMap.get(ac) : 9999;
-    const bi = orderMap.has(bc) ? orderMap.get(bc) : 9999;
+  const ai = orderMap.has(ac) ? orderMap.get(ac) : 9999;
+  const bi = orderMap.has(bc) ? orderMap.get(bc) : 9999;
 
-    if (ai !== bi) return ai - bi;
+  if (ai !== bi) return ai - bi;
 
-    const ap = Number(a.position || 0);
-    const bp = Number(b.position || 0);
-    if (ap !== bp) return ap - bp;
+  const ap = Number.isFinite(Number(a.position)) ? Number(a.position) : 0;
+  const bp = Number.isFinite(Number(b.position)) ? Number(b.position) : 0;
+  if (ap !== bp) return ap - bp;
 
-    // fallback stabile
-    return String(a.name || "").localeCompare(String(b.name || ""), "it");
-  });
+  // ✅ stabilizza: se stessa position, ordina per id
+  const aid = Number(a.id || 0);
+  const bid = Number(b.id || 0);
+  if (aid !== bid) return aid - bid;
 
-  return json({ items });
-}
+  // fallback finale
+  return String(a.name || "").localeCompare(String(b.name || ""), "it");
+});
 
     /* ==========================
        PUBLIC: PRENOTA
