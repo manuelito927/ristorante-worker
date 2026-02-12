@@ -411,7 +411,8 @@ const items = (rows || []).slice().sort((a, b) => {
   // fallback finale
   return String(a.name || "").localeCompare(String(b.name || ""), "it");
 });
-
+return json({ items });
+}
     /* ==========================
        PUBLIC: PRENOTA
        ========================== */
