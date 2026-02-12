@@ -273,7 +273,7 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
   name_en = "",
   description_en = "",
   category_en = "",
-    image_url = ""
+  image_url = "",
   price_cents,
   position = 0,
   is_available = true,
