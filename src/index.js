@@ -308,7 +308,7 @@ const allergensParam =
   Object.prototype.hasOwnProperty.call(body, "allergens")
     ? normalizeAllergens(body.allergens)
     : null;
-
+const hasImageUrl = Object.prototype.hasOwnProperty.call(body, "image_url");
 
       const rows = await sql`
         update menu_items
