@@ -317,7 +317,10 @@ const hasImageUrl = Object.prototype.hasOwnProperty.call(body, "image_url");
           description = coalesce(${body.description ?? null}, description),
           price_cents = coalesce(${body.price_cents ?? null}, price_cents),
           category = coalesce(${body.category ?? null}, category),
-          image_url = coalesce(${body.image_url ?? null}, image_url),
+image_url = case
+  when ${hasImageUrl} then ${body.image_url ?? null}
+  else image_url
+end,
           position = coalesce(${body.position ?? null}, position),
           is_available = coalesce(${body.is_available ?? null}, is_available),
           name_en = coalesce(${body.name_en ?? null}, name_en),
