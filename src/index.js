@@ -289,7 +289,7 @@ const allergens_clean = normalizeAllergens(allergens);
   const rows = await sql`
 insert into menu_items
   (name, description, price_cents, category, position, is_available,
-   name_en, description_en, category_en, allergens)
+   name_en, description_en, category_en, allergens, image_url)
 values
   (${name}, ${description}, ${price_cents}, ${category}, ${position}, ${is_available},
    ${name_en}, ${description_en}, ${category_en}, ${allergens_clean})
