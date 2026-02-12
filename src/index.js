@@ -317,6 +317,7 @@ const allergensParam =
           description = coalesce(${body.description ?? null}, description),
           price_cents = coalesce(${body.price_cents ?? null}, price_cents),
           category = coalesce(${body.category ?? null}, category),
+          image_url = coalesce(${body.image_url ?? null}, image_url),
           position = coalesce(${body.position ?? null}, position),
           is_available = coalesce(${body.is_available ?? null}, is_available),
           name_en = coalesce(${body.name_en ?? null}, name_en),
