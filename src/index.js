@@ -356,6 +356,7 @@ if (url.pathname === "/api/menu" && req.method === "GET") {
       description,
       price_cents,
       category,
+      image_url,
       position,
       is_available,
       name_en,
