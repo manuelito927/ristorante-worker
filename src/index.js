@@ -277,6 +277,7 @@ if (url.pathname === "/api/admin/menu" && req.method === "POST") {
   position = 0,
   is_available = true,
   allergens = []
+    image_url = ""
 } = body;
 
 const allergens_clean = normalizeAllergens(allergens);
