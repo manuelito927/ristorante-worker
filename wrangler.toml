@@ -1,3 +1,9 @@
+name = "ristorante-worker"
+main = "src/index.js"
+compatibility_date = "2026-02-17"
+
+workers_dev = true
+
 routes = [
   { pattern = "greenwood-pizzeria.com/api/*", zone_name = "greenwood-pizzeria.com" },
   { pattern = "greenwood-pizzeria.com/img/*", zone_name = "greenwood-pizzeria.com" }
