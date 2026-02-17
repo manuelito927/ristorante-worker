@@ -1,10 +1,4 @@
-name = "ristorante-worker"
-main = "src/index.js"
-compatibility_date = "2026-01-12"
-
 routes = [
-  { pattern = "greenwood-pizzeria.com/api/*", zone_name = "greenwood-pizzeria.com" }
+  { pattern = "greenwood-pizzeria.com/api/*", zone_name = "greenwood-pizzeria.com" },
+  { pattern = "greenwood-pizzeria.com/img/*", zone_name = "greenwood-pizzeria.com" }
 ]
-
-[vars]
-# qui NON mettere la password del db
