@@ -24,11 +24,12 @@ const isAdmin = (req, env) => {
 const cleanStr = (v) => (v == null ? "" : String(v)).trim();
 
 const normalizeAllergens = (v) => {
-  const allowed = new Set([
-    "glutine","crostacei","uova","pesce","arachidi","soia","latte",
-    "frutta_a_guscio","sedano","senape","sesamo","solfiti",
-    "lupini","molluschi","nichel"
-  ]);
+const allowed = new Set([
+  "glutine","crostacei","uova","pesce","arachidi","soia","latte",
+  "frutta_a_guscio","sedano","senape","sesamo","solfiti",
+  "lupini","molluschi","nichel",
+  "*","**","***"
+]);
 
   const arr = Array.isArray(v) ? v : [];
   return Array.from(
